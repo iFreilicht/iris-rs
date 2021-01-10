@@ -1,6 +1,4 @@
-use az::Cast;
 use fixed::types::U0F8;
-use fixed_macro::types::U0F8;
 pub use palette::{Hsl, Mix, Srgb};
 
 /// Describes an RGB color. This is the format used for storing colors
@@ -14,15 +12,27 @@ pub struct Color {
 impl Color {
     pub fn from_hsl(h: u16, s: u8, l: u8) -> Color {
         let float_hsl = Hsl::new(h as f32, s as f32, l as f32);
-        let float_rgb: Srgb = float_hsl.into();
+        float_hsl.into()
+    }
+
+    pub fn linear_mix_rgb(&self, other: &Color, factor: U0F8) -> Color {
         Color {
-            red: float_rgb.red as u8,
-            green: float_rgb.green as u8,
-            blue: float_rgb.blue as u8,
+            red: interpolate(self.red, other.red, factor),
+            green: interpolate(self.green, other.green, factor),
+            blue: interpolate(self.blue, other.blue, factor),
         }
     }
 
-    pub fn linear_mix_rgb(&self, other: &Color, factor: U0F8) {}
+    pub fn linear_mix_hsl(self, other: Color, factor: U0F8, wrap_hue: bool) -> Color {
+        // TODO: Interpolate values manually and implement wrap_hue
+        // Maybe as a separate function, mix likely does something else than linear interpolation
+        let self_hsl: Hsl = self.into();
+        let other_hsl: Hsl = other.into();
+
+        let new_hsl = self_hsl.mix(&other_hsl, factor.to_num());
+
+        new_hsl.into()
+    }
 }
 
 /// Interpolate between two numbers using a fixed-point factor between 0 and 1
@@ -62,36 +72,43 @@ pub fn interpolate(start: u8, end: u8, factor: U0F8) -> u8 {
     }
 }
 
+impl From<Hsl> for Color {
+    fn from(hsl: Hsl) -> Color {
+        let float_rgb: Srgb = hsl.into();
+        let u8_rgb: Srgb<u8> = float_rgb.into_format();
+        u8_rgb.into()
+    }
+}
+
+impl From<Color> for Hsl {
+    fn from(color: Color) -> Hsl {
+        let u8_rgb: Srgb<u8> = color.into();
+        let float_rgb: Srgb = u8_rgb.into_format();
+        float_rgb.into()
+    }
+}
+
 /// Allow conversion to any castable tuple
 ///
-impl<T: Cast<T>> From<Color> for (T, T, T)
-where
-    u8: Cast<T>,
-{
-    fn from(color: Color) -> (T, T, T) {
-        (
-            Cast::cast(color.red),
-            Cast::cast(color.green),
-            Cast::cast(color.blue),
-        )
+impl From<Color> for Srgb<u8> {
+    fn from(color: Color) -> Srgb<u8> {
+        Srgb::<u8>::from_components((color.red, color.green, color.blue))
     }
 }
 
 /// Allow easy conversion from any castable tuple
 /// Very useful for interacting with palette
-impl<T: Cast<u8>> From<(T, T, T)> for Color {
-    fn from(components: (T, T, T)) -> Color {
-        Color {
-            red: Cast::cast(components.0),
-            green: Cast::cast(components.1),
-            blue: Cast::cast(components.2),
-        }
+impl From<Srgb<u8>> for Color {
+    fn from(u8_rgb: Srgb<u8>) -> Color {
+        let (red, green, blue) = u8_rgb.into_components();
+        Color { red, green, blue }
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use fixed_macro::types::U0F8;
     #[test]
     fn test_interpolate() {
         // Trivial cases

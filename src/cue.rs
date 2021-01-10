@@ -69,53 +69,50 @@ impl Cue {
 
     /// Calculate the Color of a single LED at a given point in time
     pub fn current_color(&self, time_ms: u32, channel: u8) -> Color {
-        // Handle reversed cue
-        let channel = if self.reverse {
-            CHANNELS - 1 - channel
-        } else {
-            channel
-        };
-        // Offset calculation for given channel
-        let time_ms =
-            time_ms + ((self.duration_ms / self.time_divisor as u16) as u32 * channel as u32);
-        // Make effect wrap around
-        let time_ms = time_ms % self.duration_ms as u32;
+        let progress = self.get_progress(time_ms, channel);
 
         match self.ramp_type {
-            RampType::Jump => self.get_color_jump(time_ms),
-            RampType::LinearRGB => self.get_color_linear_rgb(time_ms),
-            RampType::LinearHSL { .. } => self.get_color_linear_hsl(time_ms),
+            RampType::Jump => self.get_color_jump(progress),
+            RampType::LinearRGB => self.start_color.linear_mix_rgb(&self.end_color, progress),
+            RampType::LinearHSL { wrap_hue } => {
+                self.start_color
+                    .linear_mix_hsl(self.end_color, progress, wrap_hue)
+            }
         }
     }
 
-    fn get_color_jump(&self, time_ms: u32) -> Color {
-        if time_ms < duration_threshold_ms(self.duration_ms, self.ramp_ratio) {
+    fn get_color_jump(&self, progress: U0F8) -> Color {
+        if progress < self.ramp_ratio {
             self.start_color
         } else {
             self.end_color
         }
     }
 
-    fn get_color_linear_rgb(&self, time_ms: u32) -> Color {
-        self.start_color
+    // Return a fraction of how far the animation has progressed for the specified LED
+    fn get_progress(&self, time_ms: u32, channel: u8) -> U0F8 {
+        assert!(channel < CHANNELS);
+
+        // Handle reversed cue
+        let channel = if self.reverse {
+            CHANNELS - 1 - channel
+        } else {
+            channel
+        };
+
+        // Offset calculation for given channel
+        let time_ms =
+            time_ms + ((self.duration_ms / self.time_divisor as u16) as u32 * channel as u32);
+
+        // Make effect wrap around
+        // As duration_ms is a u16, time_ms will now fit into a u16 as well
+        let time_ms = time_ms % self.duration_ms as u32;
+
+        // Calculate progress as a fraction of u8::MAX
+        // Because time_ms ≤ duration_ms, the result will be ≤ u8::MAX, so the cast below will succeed
+        let progress_fraction = (time_ms * u8::MAX as u32) / self.duration_ms as u32;
+        U0F8::from_bits(progress_fraction as u8)
     }
-
-    fn get_color_linear_hsl(&self, time_ms: u32) -> Color {
-        self.start_color
-    }
-}
-
-/// Calculate the duration after which the ramp to the end color has to
-/// be completed and the ramp back to the start color will be started
-fn duration_threshold_ms(duration_ms: u16, ramp_ratio: U0F8) -> u32 {
-    // All calculations have to be as u32 so they don't overflow
-    let duration_ms = duration_ms as u32;
-    let ramp_ratio = ramp_ratio.to_bits() as u32; // Gives value between 0 and 256
-
-    // Scale up first, then scale back down for precision
-    // The basic formula is just (ramp_ratio / 256) * duration_ms
-    let scaled_up = duration_ms * ramp_ratio;
-    scaled_up / (u8::MAX as u32)
 }
 
 #[cfg(test)]
@@ -123,6 +120,6 @@ mod test {
     use crate::cue::*;
     #[test]
     fn create_defaults() {
-        let rainbow = Cue::rainbow();
+        let _rainbow = Cue::rainbow();
     }
 }
