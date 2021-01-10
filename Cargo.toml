@@ -9,5 +9,8 @@ edition = "2018"
 [dependencies]
 palette = "0.5"
 fixedvec = "*"
+fixed = "*"
+fixed-macro = "*"
+az = "*"
 libm = "*"
 num = "*"

@@ -1,4 +1,5 @@
 use crate::color::Color;
+use fixed::types::U0F8; // 8-Bit fixed point number between 0 and 1
 
 /// Number of RGB-LEDs. The total number of LEDs to drive is three times this.
 pub const CHANNELS: u8 = 12;
@@ -41,10 +42,13 @@ pub struct Cue {
     /// The algorithm to use for transitioning between the two colors.
     /// Also see [`RampType`]
     pub ramp_type: RampType,
-    /// The ratio between the transition from start to end and end to start
-    /// as a fraction of 256.
-    pub ramp_ratio: u8,
+    /// The ratio between the transition from start to end and end to start between 0 and 1
+    /// We use an 8-bit fixed point number as this gives a sufficient step size of
+    /// ~0.004 and makes sure calculations don't overflow inside u32 registers
+    pub ramp_ratio: U0F8,
+    /// The color to start from
     pub start_color: Color,
+    /// The color to transition to
     pub end_color: Color,
 }
 
@@ -57,7 +61,7 @@ impl Cue {
             time_divisor: CHANNELS,
             duration_ms: 3000,
             ramp_type: RampType::LinearHSL { wrap_hue: false },
-            ramp_ratio: u8::MAX,
+            ramp_ratio: U0F8::MAX,
             start_color: Color::from_hsl(0, 100, 50),
             end_color: Color::from_hsl(359, 100, 50),
         }
@@ -72,61 +76,46 @@ impl Cue {
             channel
         };
         // Offset calculation for given channel
-        let time_ms = time_ms + ((self.duration_ms / self.time_divisor as u16) as u32 * channel as u32;
+        let time_ms =
+            time_ms + ((self.duration_ms / self.time_divisor as u16) as u32 * channel as u32);
         // Make effect wrap around
         let time_ms = time_ms % self.duration_ms as u32;
 
         match self.ramp_type {
-            RampType::Jump => self.jump_transition(time_ms),
-            RampType::LinearRGB => self.linear_rgb_transition(time_ms),
-            RampType::LinearHSL { .. } => self.linear_hsl_transition(time_ms),
+            RampType::Jump => self.get_color_jump(time_ms),
+            RampType::LinearRGB => self.get_color_linear_rgb(time_ms),
+            RampType::LinearHSL { .. } => self.get_color_linear_hsl(time_ms),
         }
+    }
+
+    fn get_color_jump(&self, time_ms: u32) -> Color {
+        if time_ms < duration_threshold_ms(self.duration_ms, self.ramp_ratio) {
+            self.start_color
+        } else {
+            self.end_color
+        }
+    }
+
+    fn get_color_linear_rgb(&self, time_ms: u32) -> Color {
+        self.start_color
+    }
+
+    fn get_color_linear_hsl(&self, time_ms: u32) -> Color {
+        self.start_color
     }
 }
 
 /// Calculate the duration after which the ramp to the end color has to
 /// be completed and the ramp back to the start color will be started
-fn duration_threshold_ms(duration_ms: u16, ramp_ratio: u8) -> u32 {
+fn duration_threshold_ms(duration_ms: u16, ramp_ratio: U0F8) -> u32 {
     // All calculations have to be as u32 so they don't overflow
     let duration_ms = duration_ms as u32;
-    let ramp_ratio = ramp_ratio as u32;
+    let ramp_ratio = ramp_ratio.to_bits() as u32; // Gives value between 0 and 256
 
     // Scale up first, then scale back down for precision
     // The basic formula is just (ramp_ratio / 256) * duration_ms
     let scaled_up = duration_ms * ramp_ratio;
     scaled_up / (u8::MAX as u32)
-}
-
-/// Perform a linear transition between two numbers
-pub fn linear_transition(start: u8, end: u8, duration_ms: u16, ramp_ratio: u8, time_ms: u32) -> u8 {
-    // We use 32 bit ints to ensure high precision and prevent overflows
-    let start = start as u32;
-    let end = end as u32;
-
-    // For each calculation, the result has to be a large positive integer,
-    // so we always have to calculate with a positive delta
-    let positive_delta = start < end;
-    let delta = if positive_delta {
-        end - start
-    } else {
-        start - end
-    };
-
-    let threshold_ms = duration_threshold_ms(duration_ms, ramp_ratio);
-
-    let summand = if time_ms <= threshold_ms {
-        // Upward slope
-        (delta * time_ms) / threshold_ms
-    } else {
-        // Downward slope
-        delta - (delta * (time_ms - threshold_ms)) / (duration_ms as u32 - threshold_ms)
-    };
-
-    if positive_delta {
-        (start + summand) as u8
-    } else {
-        (start - summand) as u8
-    }
 }
 
 #[cfg(test)]
