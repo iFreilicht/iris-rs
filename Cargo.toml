@@ -1,5 +1,6 @@
 [workspace]
 
 members = [
-    "iris-lib"
+    "iris-lib",
+    "iris-hub",
 ]
