@@ -1,0 +1,16 @@
+[package]
+name = "iris-lib"
+version = "0.1.0"
+authors = ["Felix Uhl <felix.uhl@outlook.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+palette = "0.5"
+fixedvec = "*"
+fixed = "*"
+fixed-macro = "*"
+az = "*"
+libm = "*"
+num = "*"
