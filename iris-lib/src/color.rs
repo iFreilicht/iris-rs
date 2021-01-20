@@ -23,7 +23,7 @@ impl Color {
         }
     }
 
-    pub fn linear_mix_hsl(self, other: Color, factor: U0F8, wrap_hue: bool) -> Color {
+    pub fn linear_mix_hsl(self, other: Color, factor: U0F8, _wrap_hue: bool) -> Color {
         // TODO: Interpolate values manually and implement wrap_hue
         // Maybe as a separate function, mix likely does something else than linear interpolation
         let self_hsl: Hsl = self.into();
@@ -88,20 +88,25 @@ impl From<Color> for Hsl {
     }
 }
 
-/// Allow conversion to any castable tuple
-///
+/// Allow conversion to palette's integer RGB type
 impl From<Color> for Srgb<u8> {
     fn from(color: Color) -> Srgb<u8> {
         Srgb::<u8>::from_components((color.red, color.green, color.blue))
     }
 }
 
-/// Allow easy conversion from any castable tuple
-/// Very useful for interacting with palette
+/// Allow conversion from palette's integer RGB type
 impl From<Srgb<u8>> for Color {
     fn from(u8_rgb: Srgb<u8>) -> Color {
         let (red, green, blue) = u8_rgb.into_components();
         Color { red, green, blue }
+    }
+}
+
+/// Allow conversion to iterable array. Useful for converting to hex
+impl From<Color> for [u8; 3] {
+    fn from(color: Color) -> [u8; 3] {
+        [color.red, color.green, color.blue]
     }
 }
 
