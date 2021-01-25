@@ -2,10 +2,16 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Hello wasm-pack!</title>
+    <title>Iris Hub</title>
+    <link rel="stylesheet" href="style.css"/>
   </head>
   <body>
     <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
     <script src="./bootstrap.js"></script>
+
+    <h1>Testing SVG display</h1>
+
+    <!-- Embed SVG as object to access and change the color of each segment individually -->
+    <object id="ring-display" type="image/svg+xml" alt="Iris ring display" data="led_display_optimized.svg"></object>
   </body>
 </html>

@@ -10,6 +10,10 @@ pub struct Color {
 }
 
 impl Color {
+    pub fn new(red: u8, green: u8, blue: u8) -> Color {
+        Color { red, green, blue }
+    }
+
     pub fn from_hsl(h: u16, s: u8, l: u8) -> Color {
         let float_hsl = Hsl::new(h as f32, s as f32, l as f32);
         float_hsl.into()

@@ -1,0 +1,24 @@
+<svg id="svg8" width="18mm" height="18mm" version="1.1" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+ <g id="layer1">
+  <g>
+   <circle id="case_outer" cx="9" cy="9" r="9" fill="#3d3d3d"/>
+   <circle id="case_edge" cx="9" cy="9" r="6.75" fill="#313131"/>
+   <circle id="case_inner" cx="9" cy="9" r="6" fill="#202020"/>
+   <circle id="button" cx="9" cy="9" r="4.9" fill="#2c2c2c"/>
+  </g>
+  <g fill="none" stroke="#fff" stroke-width=".9">
+   <path id="channel0" d="m9.0476 3.5502a5.45 5.45 0 0 1 2.6361 0.70635"/>
+   <path id="channel1" d="m11.766 4.3041a5.45 5.45 0 0 1 1.9298 1.9298"/>
+   <path id="channel2" d="m13.743 6.3163a5.45 5.45 0 0 1 0.70635 2.6361"/>
+   <path id="channel3" d="m14.45 9.0476a5.45 5.45 0 0 1-0.70635 2.6361"/>
+   <path id="channel4" d="m13.696 11.766a5.45 5.45 0 0 1-1.9298 1.9298"/>
+   <path id="channel5" d="m11.684 13.743a5.45 5.45 0 0 1-2.6361 0.70635"/>
+   <path id="channel6" d="m8.9524 14.45a5.45 5.45 0 0 1-2.6361-0.70635"/>
+   <path id="channel7" d="m6.2339 13.696a5.45 5.45 0 0 1-1.9298-1.9298"/>
+   <path id="channel8" d="m4.2566 11.684a5.45 5.45 0 0 1-0.70635-2.6361"/>
+   <path id="channel9" d="m3.5502 8.9524a5.45 5.45 0 0 1 0.70635-2.6361"/>
+   <path id="channel10" d="m4.3041 6.2339a5.45 5.45 0 0 1 1.9298-1.9298"/>
+   <path id="channel11" d="m6.3163 4.2566a5.45 5.45 0 0 1 2.6361-0.70635"/>
+  </g>
+ </g>
+</svg>
