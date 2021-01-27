@@ -7,6 +7,9 @@ module.exports = {
     path: path.resolve(__dirname, "dist"),
     filename: "bootstrap.js",
   },
+  experiments: {
+    syncWebAssembly: true, // Deprecated, async needs research
+  },
   mode: "development",
   plugins: [
     new CopyWebpackPlugin(['index.html', 'assets'])
