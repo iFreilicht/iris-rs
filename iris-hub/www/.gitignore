@@ -1,5 +1,3 @@
 node_modules
 dist
-
-# Files output by tsc
-index.js
+build
