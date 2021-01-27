@@ -94,17 +94,49 @@ impl Cue {
         }
     }
 
+    /// Create pre-built Cue displaying a white breathing effect
+    pub fn white_breathing() -> Cue {
+        Cue {
+            duration_ms: 3600,
+            ramp_type: RampType::LinearRGB,
+            ramp_ratio: U0F8!(0.4),
+            time_divisor: 1,
+            start_color: Color::black(),
+            end_color: Color::white(),
+            ..Default::default()
+        }
+    }
+
     /// Calculate the Color of a single LED at a given point in time
     pub fn current_color(&self, time_ms: u32, channel: u8) -> Color {
         let progress = self.get_progress(time_ms, channel);
 
         match self.ramp_type {
             RampType::Jump => self.get_color_jump(progress),
-            RampType::LinearRGB => self.start_color.linear_mix_rgb(&self.end_color, progress),
-            RampType::LinearHSL { wrap_hue } => {
-                self.start_color
-                    .linear_mix_hsl(self.end_color, progress, wrap_hue)
-            }
+            RampType::LinearRGB => self
+                .start_color
+                .linear_mix_rgb(&self.end_color, self.get_mixing_factor(progress)),
+            RampType::LinearHSL { wrap_hue } => self.start_color.linear_mix_hsl(
+                self.end_color,
+                self.get_mixing_factor(progress),
+                wrap_hue,
+            ),
+        }
+    }
+
+    // Calculate factor for color mixing
+    fn get_mixing_factor(&self, progress: U0F8) -> U0F8 {
+        // In theory, the maximum value that can occur is 1, but U0F8 can't represent that,
+        // so we use saturating division, which prevents an overflow.
+        if progress <= self.ramp_ratio {
+            // Actual formula:
+            // progress / ramp_ratio
+            progress.saturating_div(self.ramp_ratio)
+        } else {
+            // We have to use saturating division here as well due to rounding errors
+            // We also use U0F8::MAX instead of 1. Actual formula:
+            // 1 - (progress - ramp_ratio)/(1 - ramp_ratio)
+            U0F8::MAX - (progress - self.ramp_ratio).saturating_div(U0F8::MAX - self.ramp_ratio)
         }
     }
 
@@ -187,5 +219,6 @@ mod test {
     fn create_defaults() {
         let _ = Cue::rainbow();
         let _ = Cue::black_white_jump();
+        let _ = Cue::white_breathing();
     }
 }

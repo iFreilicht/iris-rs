@@ -17,7 +17,7 @@ impl Iris {
     }
 
     pub fn add_cue(&mut self) {
-        self.cues.push(Arc::new(Cue::black_white_jump()));
+        self.cues.push(Arc::new(Cue::white_breathing()));
     }
     pub fn delete_cue(&mut self, id: usize) {
         self.cues.remove(id);
