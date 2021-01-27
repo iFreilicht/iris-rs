@@ -109,23 +109,23 @@ impl Cue {
 
     /// Calculate the Color of a single LED at a given point in time
     pub fn current_color(&self, time_ms: u32, channel: u8) -> Color {
-        let progress = self.get_progress(time_ms, channel);
+        let progress = self.progress(time_ms, channel);
 
         match self.ramp_type {
-            RampType::Jump => self.get_color_jump(progress),
+            RampType::Jump => self.color_jump(progress),
             RampType::LinearRGB => self
                 .start_color
-                .linear_mix_rgb(&self.end_color, self.get_mixing_factor(progress)),
+                .linear_mix_rgb(&self.end_color, self.mixing_factor(progress)),
             RampType::LinearHSL { wrap_hue } => self.start_color.linear_mix_hsl(
                 self.end_color,
-                self.get_mixing_factor(progress),
+                self.mixing_factor(progress),
                 wrap_hue,
             ),
         }
     }
 
     // Calculate factor for color mixing
-    fn get_mixing_factor(&self, progress: U0F8) -> U0F8 {
+    fn mixing_factor(&self, progress: U0F8) -> U0F8 {
         // In theory, the maximum value that can occur is 1, but U0F8 can't represent that,
         // so we use saturating division, which prevents an overflow.
         if progress <= self.ramp_ratio {
@@ -141,7 +141,7 @@ impl Cue {
     }
 
     // Calculate color for progress if the RampType was Jump
-    fn get_color_jump(&self, progress: U0F8) -> Color {
+    fn color_jump(&self, progress: U0F8) -> Color {
         if progress < self.ramp_ratio {
             self.start_color
         } else {
@@ -164,18 +164,18 @@ impl Cue {
     ///     .. Default::default()
     /// };
     ///
-    /// assert_eq!(cue.get_progress(0,0), U0F8!(0));
-    /// assert_eq!(cue.get_progress(600,0), U0F8!(0.5));
-    /// assert_eq!(cue.get_progress(1199,0), U0F8::MAX);
+    /// assert_eq!(cue.progress(0,0), U0F8!(0));
+    /// assert_eq!(cue.progress(600,0), U0F8!(0.5));
+    /// assert_eq!(cue.progress(1199,0), U0F8::MAX);
     /// // Offsets each LED equally
-    /// assert_eq!(cue.get_progress(0,2), cue.get_progress(600,8));
-    /// assert_eq!(cue.get_progress(300,3), cue.get_progress(900,9));
+    /// assert_eq!(cue.progress(0,2), cue.progress(600,8));
+    /// assert_eq!(cue.progress(300,3), cue.progress(900,9));
     /// // wraps around
-    /// assert_eq!(cue.get_progress(1200,0), 0);
+    /// assert_eq!(cue.progress(1200,0), 0);
     /// cue.time_divisor = 6;
-    /// assert_eq!(cue.get_progress(200,1), cue.get_progress(200,7));
+    /// assert_eq!(cue.progress(200,1), cue.progress(200,7));
     /// ```
-    pub fn get_progress(&self, time_ms: u32, channel: u8) -> U0F8 {
+    pub fn progress(&self, time_ms: u32, channel: u8) -> U0F8 {
         assert!(channel < CHANNELS);
 
         // duration_ms cannot be 0, otherwise calculations below may underflow or cause a crash
