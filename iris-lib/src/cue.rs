@@ -53,32 +53,44 @@ pub struct Cue {
     pub end_color: Color,
 }
 
-impl Cue {
-    /// Create pre-built Cue displaying a clockwise rotating rainbow
-    pub fn rainbow() -> Cue {
+impl Default for Cue {
+    /// Default Cue will be black, change at least the colors to make it visible!
+    fn default() -> Cue {
         Cue {
             channels: [true; CHANNELS as usize],
             reverse: false,
             time_divisor: CHANNELS,
+            duration_ms: 1000, // Don't set to 0, otherwise the Cue would be invisible
+            ramp_type: RampType::Jump,
+            ramp_ratio: U0F8!(0.5), // Don't set to 0, the start color would be invisible
+
+            // Set colors to black, those should be changed!
+            start_color: Color::black(),
+            end_color: Color::black(),
+        }
+    }
+}
+
+impl Cue {
+    /// Create pre-built Cue displaying a clockwise rotating rainbow
+    pub fn rainbow() -> Cue {
+        Cue {
             duration_ms: 3000,
             ramp_type: RampType::LinearHSL { wrap_hue: false },
             ramp_ratio: U0F8::MAX,
             start_color: Color::from_hsl(0, 100, 50),
             end_color: Color::from_hsl(359, 100, 50),
+            ..Default::default()
         }
     }
 
     /// Create pre-built Cue displaying a clockwise rotating black and white half
     pub fn black_white_jump() -> Cue {
         Cue {
-            channels: [true; CHANNELS as usize],
-            reverse: false,
-            time_divisor: CHANNELS,
             duration_ms: 3000,
-            ramp_type: RampType::Jump,
-            ramp_ratio: U0F8!(0.5),
             start_color: Color::white(),
             end_color: Color::black(),
+            ..Default::default()
         }
     }
 
@@ -105,29 +117,65 @@ impl Cue {
         }
     }
 
-    // Return a fraction of how far the animation has progressed for the specified LED
-    fn get_progress(&self, time_ms: u32, channel: u8) -> U0F8 {
+    /// Return a fraction of how far the animation has progressed for the specified LED
+    /// # Examples:
+    /// ```
+    /// use iris_lib::color::Color;
+    /// use iris_lib::cue::Cue;
+    /// use fixed::types::U0F8;
+    /// use fixed_macro::types::U0F8;
+    ///
+    /// let mut cue = Cue {
+    ///     reverse: true,  // Reverse makes the numbers a little nicer
+    ///     duration_ms: 1200,
+    ///     time_divisor: 12,
+    ///     .. Default::default()
+    /// };
+    ///
+    /// assert_eq!(cue.get_progress(0,0), U0F8!(0));
+    /// assert_eq!(cue.get_progress(600,0), U0F8!(0.5));
+    /// assert_eq!(cue.get_progress(1199,0), U0F8::MAX);
+    /// // Offsets each LED equally
+    /// assert_eq!(cue.get_progress(0,2), cue.get_progress(600,8));
+    /// assert_eq!(cue.get_progress(300,3), cue.get_progress(900,9));
+    /// // wraps around
+    /// assert_eq!(cue.get_progress(1200,0), 0);
+    /// cue.time_divisor = 6;
+    /// assert_eq!(cue.get_progress(200,1), cue.get_progress(200,7));
+    /// ```
+    pub fn get_progress(&self, time_ms: u32, channel: u8) -> U0F8 {
         assert!(channel < CHANNELS);
 
+        // duration_ms cannot be 0, otherwise calculations below may underflow or cause a crash
+        if self.duration_ms == 0 {
+            return U0F8!(0);
+        }
+
         // Handle reversed cue
-        // TODO: why is the if-statement this way around so reverse means counter-clockwise?
         let channel = if self.reverse {
             channel
         } else {
+            // In non-reverse, lower channels need a higher progress
             CHANNELS - 1 - channel
         };
 
+        // We need the duration to be u32 in all calculations
+        let duration = self.duration_ms as u32;
+        let time_divisor = self.time_divisor as u32;
+
         // Offset calculation for given channel
-        let time_ms =
-            time_ms + ((self.duration_ms / self.time_divisor as u16) as u32 * channel as u32);
+        // `+ (time_divisor / 2)` achieves mathematical integer rounding, see https://stackoverflow.com/a/2422722/
+        let time_ms = time_ms + (((duration * channel as u32) + (time_divisor / 2)) / time_divisor);
 
         // Make effect wrap around
-        // As duration_ms is a u16, time_ms will now fit into a u16 as well
-        let time_ms = time_ms % self.duration_ms as u32;
+        // As duration_ms is a u16, time_ms is now ≤ 0xFFFE
+        let time_ms = time_ms % duration;
 
         // Calculate progress as a fraction of u8::MAX
-        // Because time_ms ≤ duration_ms, the result will be ≤ u8::MAX, so the cast below will succeed
-        let progress_fraction = (time_ms * u8::MAX as u32) / self.duration_ms as u32;
+        // The calculation for all maximum values that can be computed on here would be
+        // 0xFFFE * 0xFF + 0xFFFE) / 0xFFFF = 0xFF
+        // So the result will always fit into a u8.
+        let progress_fraction = (time_ms * u8::MAX as u32 + duration / 2) / duration;
         U0F8::from_bits(progress_fraction as u8)
     }
 }
