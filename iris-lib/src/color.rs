@@ -14,6 +14,14 @@ impl Color {
         Color { red, green, blue }
     }
 
+    pub fn black() -> Color {
+        [0, 0, 0].into()
+    }
+
+    pub fn white() -> Color {
+        [255, 255, 255].into()
+    }
+
     pub fn from_hsl(h: u16, s: u8, l: u8) -> Color {
         let float_hsl = Hsl::new(h as f32, s as f32, l as f32);
         float_hsl.into()
@@ -111,6 +119,17 @@ impl From<Srgb<u8>> for Color {
 impl From<Color> for [u8; 3] {
     fn from(color: Color) -> [u8; 3] {
         [color.red, color.green, color.blue]
+    }
+}
+
+/// Allow conversion from array
+impl From<[u8; 3]> for Color {
+    fn from(arr: [u8; 3]) -> Color {
+        Color {
+            red: arr[0],
+            green: arr[1],
+            blue: arr[2],
+        }
     }
 }
 

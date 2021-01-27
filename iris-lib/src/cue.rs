@@ -1,5 +1,6 @@
 use crate::color::Color;
 use fixed::types::U0F8; // 8-Bit fixed point number between 0 and 1
+use fixed_macro::types::U0F8;
 
 /// Number of RGB-LEDs. The total number of LEDs to drive is three times this.
 pub const CHANNELS: u8 = 12;
@@ -53,7 +54,7 @@ pub struct Cue {
 }
 
 impl Cue {
-    /// Create pre-built rainbow Cue
+    /// Create pre-built Cue displaying a clockwise rotating rainbow
     pub fn rainbow() -> Cue {
         Cue {
             channels: [true; CHANNELS as usize],
@@ -64,6 +65,20 @@ impl Cue {
             ramp_ratio: U0F8::MAX,
             start_color: Color::from_hsl(0, 100, 50),
             end_color: Color::from_hsl(359, 100, 50),
+        }
+    }
+
+    /// Create pre-built Cue displaying a clockwise rotating black and white half
+    pub fn black_white_jump() -> Cue {
+        Cue {
+            channels: [true; CHANNELS as usize],
+            reverse: false,
+            time_divisor: CHANNELS,
+            duration_ms: 3000,
+            ramp_type: RampType::Jump,
+            ramp_ratio: U0F8!(0.5),
+            start_color: Color::white(),
+            end_color: Color::black(),
         }
     }
 
@@ -81,6 +96,7 @@ impl Cue {
         }
     }
 
+    // Calculate color for progress if the RampType was Jump
     fn get_color_jump(&self, progress: U0F8) -> Color {
         if progress < self.ramp_ratio {
             self.start_color
@@ -94,10 +110,11 @@ impl Cue {
         assert!(channel < CHANNELS);
 
         // Handle reversed cue
+        // TODO: why is the if-statement this way around so reverse means counter-clockwise?
         let channel = if self.reverse {
-            CHANNELS - 1 - channel
-        } else {
             channel
+        } else {
+            CHANNELS - 1 - channel
         };
 
         // Offset calculation for given channel
@@ -120,6 +137,7 @@ mod test {
     use crate::cue::*;
     #[test]
     fn create_defaults() {
-        let _rainbow = Cue::rainbow();
+        let _ = Cue::rainbow();
+        let _ = Cue::black_white_jump();
     }
 }
