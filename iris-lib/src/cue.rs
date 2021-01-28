@@ -1,7 +1,6 @@
 use crate::color::Color;
 use fixed::types::U0F8; // 8-Bit fixed point number between 0 and 1
 use fixed_macro::types::U0F8;
-use getset::{Getters, Setters};
 use serde;
 use serde::{Deserialize, Serialize};
 
@@ -47,41 +46,33 @@ impl From<f32> for RampRatio {
 
 /// A simple animation that transitions between two colors cyclically.
 /// It transitions from the start color to the end color and then back.
-#[derive(Serialize, Deserialize, Getters, Setters)]
+#[derive(Serialize, Deserialize)]
 pub struct Cue {
     /// Each LED can be turned off. This is only relevant when using the
     /// Cue in a Schedule
-    #[getset(get = "pub", set = "pub")]
     pub channels: [bool; CHANNELS as usize],
     /// Play the Cue in reverse
-    #[getset(get = "pub", set = "pub")]
     pub reverse: bool,
     /// Repeat the pattern after reaching a certain LED. Examples values:
     /// - *12*: One full rotation with no visible seams
     /// - *6*: Two moving elements with no visible seams
     /// - *4*: Three moving elements with no visible seams
     /// - *1*: Three moving elements with no visible seams
-    #[getset(get = "pub", set = "pub")]
     pub time_divisor: u8,
     /// The duration until the animation repeats.
     // u16 is enough for 65 seconds, we don't need more than that and it makes
     // sure the calculations don't overflow when applying the ramp ratio.
-    #[getset(get = "pub", set = "pub")]
     pub duration_ms: u16,
     /// The algorithm to use for transitioning between the two colors.
     /// Also see [`RampType`]
-    #[getset(get = "pub", set = "pub")]
     pub ramp_type: RampType,
     /// The ratio between the transition from start to end and end to start between 0 and 1
     /// We use an 8-bit fixed point number as this gives a sufficient step size of
     /// ~0.004 and makes sure calculations don't overflow inside u32 registers
-    #[getset(get = "pub", set = "pub")]
     pub ramp_ratio: RampRatio,
     /// The color to start from
-    #[getset(get = "pub", set = "pub")]
     pub start_color: Color,
     /// The color to transition to
-    #[getset(get = "pub", set = "pub")]
     pub end_color: Color,
 }
 

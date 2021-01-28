@@ -22,15 +22,16 @@ macro_rules! bind_from_iris {
 }
 
 /// Implement a getter and setter for the specified fields of the current cue
+/// `$type` is the type to convert to/from, not the one stored inside [`Cue`]
 #[macro_use]
 macro_rules! define_accessors {
-    ($getter:ident, $setter:ident -> $type:ty) => {
-        // Getter for $field_name
+    ($field_name:ident() -> $type:ty; $setter:ident()) => {
+        // Getter for $field_name, has the same name
         // If no cue is active, the default value will be returned
-        pub fn $getter(&self) -> $type {
+        pub fn $field_name(&self) -> $type {
             match &self.current {
-                Some(current) => *current.lock().unwrap().$getter(),
-                None => *Cue::default().$getter(),
+                Some(current) => current.lock().unwrap().$field_name.into(),
+                None => Cue::default().$field_name.into(),
             }
         }
         // Setter for $field_name
@@ -38,7 +39,7 @@ macro_rules! define_accessors {
         // Panics if there is no current cue
         pub fn $setter(&mut self, value: $type) {
             match &self.current {
-                Some(current) => drop(current.lock().unwrap().$setter(value)),
+                Some(current) => current.lock().unwrap().$field_name = value.into(),
                 _ => panic!("No cue is currently active!"),
             };
         }

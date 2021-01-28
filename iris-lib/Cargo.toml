@@ -15,4 +15,3 @@ az = "*"
 libm = "*"
 num = "*"
 serde = { version = "1.*", features = ["derive"] }
-getset = "*"
