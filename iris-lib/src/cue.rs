@@ -1,11 +1,14 @@
 use crate::color::Color;
 use fixed::types::U0F8; // 8-Bit fixed point number between 0 and 1
 use fixed_macro::types::U0F8;
+use serde;
+use serde::{Deserialize, Serialize};
 
 /// Number of RGB-LEDs. The total number of LEDs to drive is three times this.
 pub const CHANNELS: u8 = 12;
 
 /// The algorithm used for transitioning between two colors.
+#[derive(Serialize, Deserialize)]
 pub enum RampType {
     /// Hard cut, no interpolation between colors
     Jump,
@@ -22,8 +25,28 @@ pub enum RampType {
     },
 }
 
+/// Newtype implementation of a fixed-point number x, where 0 ≤ x < 1
+/// Will serialize into an [`f32`]
+#[derive(Clone, Copy, Serialize, Deserialize)]
+#[serde(from = "f32")]
+#[serde(into = "f32")]
+pub struct RampRatio(U0F8);
+
+impl From<RampRatio> for f32 {
+    fn from(value: RampRatio) -> f32 {
+        value.into()
+    }
+}
+
+impl From<f32> for RampRatio {
+    fn from(value: f32) -> RampRatio {
+        RampRatio(U0F8::saturating_from_num(value))
+    }
+}
+
 /// A simple animation that transitions between two colors cyclically.
 /// It transitions from the start color to the end color and then back.
+#[derive(Serialize, Deserialize)]
 pub struct Cue {
     /// Each LED can be turned off. This is only relevant when using the
     /// Cue in a Schedule
@@ -46,7 +69,7 @@ pub struct Cue {
     /// The ratio between the transition from start to end and end to start between 0 and 1
     /// We use an 8-bit fixed point number as this gives a sufficient step size of
     /// ~0.004 and makes sure calculations don't overflow inside u32 registers
-    pub ramp_ratio: U0F8,
+    pub ramp_ratio: RampRatio,
     /// The color to start from
     pub start_color: Color,
     /// The color to transition to
@@ -62,7 +85,7 @@ impl Default for Cue {
             time_divisor: CHANNELS,
             duration_ms: 1000, // Don't set to 0, otherwise the Cue would be invisible
             ramp_type: RampType::Jump,
-            ramp_ratio: U0F8!(0.5), // Don't set to 0, the start color would be invisible
+            ramp_ratio: 0.5.into(), // Don't set to 0, the start color would be invisible
 
             // Set colors to black, those should be changed!
             start_color: Color::black(),
@@ -77,7 +100,7 @@ impl Cue {
         Cue {
             duration_ms: 3000,
             ramp_type: RampType::LinearHSL { wrap_hue: false },
-            ramp_ratio: U0F8::MAX,
+            ramp_ratio: 1.0.into(),
             start_color: Color::from_hsl(0, 100, 50),
             end_color: Color::from_hsl(359, 100, 50),
             ..Default::default()
@@ -99,7 +122,7 @@ impl Cue {
         Cue {
             duration_ms: 3600,
             ramp_type: RampType::LinearRGB,
-            ramp_ratio: U0F8!(0.4),
+            ramp_ratio: 0.4.into(),
             time_divisor: 1,
             start_color: Color::black(),
             end_color: Color::white(),
@@ -128,21 +151,21 @@ impl Cue {
     fn mixing_factor(&self, progress: U0F8) -> U0F8 {
         // In theory, the maximum value that can occur is 1, but U0F8 can't represent that,
         // so we use saturating division, which prevents an overflow.
-        if progress <= self.ramp_ratio {
+        if progress <= self.ramp_ratio.0 {
             // Actual formula:
             // progress / ramp_ratio
-            progress.saturating_div(self.ramp_ratio)
+            progress.saturating_div(self.ramp_ratio.0)
         } else {
             // We have to use saturating division here as well due to rounding errors
             // We also use U0F8::MAX instead of 1. Actual formula:
             // 1 - (progress - ramp_ratio)/(1 - ramp_ratio)
-            U0F8::MAX - (progress - self.ramp_ratio).saturating_div(U0F8::MAX - self.ramp_ratio)
+            U0F8::MAX - (progress - self.ramp_ratio.0).saturating_div(U0F8::MAX - self.ramp_ratio.0)
         }
     }
 
     // Calculate color for progress if the RampType was Jump
     fn color_jump(&self, progress: U0F8) -> Color {
-        if progress < self.ramp_ratio {
+        if progress < self.ramp_ratio.0 {
             self.start_color
         } else {
             self.end_color
