@@ -1,4 +1,5 @@
 pub mod iris;
+#[macro_use]
 mod utils;
 
 use iris::Iris;
@@ -24,24 +25,7 @@ pub fn init() {
 }
 
 // Create bindings to functions defined inside [`Iris`]
-// TODO: Make a macro for this, it will get repetitive
-
-#[wasm_bindgen]
-pub fn add_cue() {
-    IRIS.lock().unwrap().add_cue()
-}
-
-#[wasm_bindgen]
-pub fn delete_cue(id: usize) {
-    IRIS.lock().unwrap().delete_cue(id)
-}
-
-#[wasm_bindgen]
-pub fn launch_cue(id: usize) {
-    IRIS.lock().unwrap().launch_cue(id)
-}
-
-#[wasm_bindgen]
-pub fn current_color(time_ms: u32, channel: u8) -> String {
-    IRIS.lock().unwrap().current_color(time_ms, channel)
-}
+bind_from_iris!(add_cue());
+bind_from_iris!(delete_cue(id: usize));
+bind_from_iris!(launch_cue(id: usize));
+bind_from_iris!(current_color(time_ms: u32, channel: u8) -> String);
