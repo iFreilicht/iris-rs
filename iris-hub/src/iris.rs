@@ -54,25 +54,17 @@ impl Iris {
         CHANNELS
     }
 
-    define_accessors!(reverse() -> bool; set_reverse());
-    define_accessors!(time_divisor() -> u8; set_time_divisor());
-    define_accessors!(duration_ms() -> u16; set_duration_ms());
-    define_accessors!(ramp_ratio() -> f32; set_ramp_ratio());
-    define_accessors!(start_color() -> Color; set_start_color());
-    define_accessors!(end_color() -> Color; set_end_color());
-
-    pub fn channel(&self, num: usize) -> bool {
-        match &self.current {
-            Some(current) => current.lock().unwrap().channels[num],
-            None => Cue::default().channels[num],
-        }
-    }
-    pub fn set_channel(&mut self, num: usize, value: bool) {
-        match &self.current {
-            Some(current) => current.lock().unwrap().channels[num] = value,
-            _ => panic!("No cue is currently active!"),
-        };
-    }
+    // Define accessors for all fields of Cue
+    define_accessors!(channels; 
+        channel(num: usize){(|| channels[num])} -> bool; 
+        // set_channel actually has the signature set_channel(num: usize, value: bool)
+        set_channel(value){(|| channels[num] = value)});
+    define_accessors!(reverse() -> bool; set_reverse(value));
+    define_accessors!(time_divisor() -> u8; set_time_divisor(value));
+    define_accessors!(duration_ms() -> u16; set_duration_ms(value));
+    define_accessors!(ramp_ratio() -> f32; set_ramp_ratio(value));
+    define_accessors!(start_color() -> Color; set_start_color(value));
+    define_accessors!(end_color() -> Color; set_end_color(value));
 }
 
 /// Convert [`iris_lib::color::Color`] to a hex string

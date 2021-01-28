@@ -25,23 +25,36 @@ macro_rules! bind_from_iris {
 /// `$type` is the type to convert to/from, not the one stored inside [`Cue`]
 #[macro_use]
 macro_rules! define_accessors {
-    ($field_name:ident() -> $type:ty; $setter:ident()) => {
+    // Variant for complex case with setter/getter closure and optional argument
+    ($field_name:ident; $getter:ident ($($arg:ident : $arg_t:ty)?){$from:tt} -> $type:ty;
+    $setter:ident($val:ident){$to:tt}) => {
         // Getter for $field_name, has the same name
         // If no cue is active, the default value will be returned
-        pub fn $field_name(&self) -> $type {
+        pub fn $getter(&self $(, $arg: $arg_t)?) -> $type {
             match &self.current {
-                Some(current) => current.lock().unwrap().$field_name.into(),
-                None => Cue::default().$field_name.into(),
+                Some(current) => {
+                    let $field_name = &current.lock().unwrap().$field_name;
+                    $from()
+                },
+                None => {
+                    let $field_name = &Cue::default().$field_name;
+                    $from()
+                },
             }
         }
         // Setter for $field_name
         // # Panics
         // Panics if there is no current cue
-        pub fn $setter(&mut self, value: $type) {
-            match &self.current {
-                Some(current) => current.lock().unwrap().$field_name = value.into(),
+        pub fn $setter(&mut self, $($arg : $arg_t ,)? $val: $type) {
+            let mut $field_name = match &self.current {
+                Some(current) => current.lock().unwrap().$field_name,
                 _ => panic!("No cue is currently active!"),
             };
+            $to()
         }
+    };
+    // Generalized case where only the output type has to be specified
+    ($field_name:ident () -> $type:ty; $setter:ident(value)) => {
+        define_accessors!($field_name; $field_name(){(|| <$type>::from(*$field_name))} -> $type; $setter(value){(|| $field_name = value.into())});
     };
 }
