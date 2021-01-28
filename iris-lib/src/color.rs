@@ -3,7 +3,7 @@ pub use palette::{Hsl, Mix, Srgb};
 use serde::{Deserialize, Serialize};
 
 /// Describes an RGB color. This is the format used for storing colors
-#[derive(Copy, Clone, Serialize, Deserialize)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct Color {
     red: u8,
     green: u8,

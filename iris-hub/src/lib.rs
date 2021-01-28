@@ -44,7 +44,7 @@ bind_from_iris!(set_duration_ms(value: u16));
 bind_from_iris!(ramp_ratio() -> f32);
 bind_from_iris!(set_ramp_ratio(value: f32));
 // Doesn't work because Color is not ABI bound
-//bind_from_iris!(start_color() -> Color);
-//bind_from_iris!(set_start_color(value: Color));
-//bind_from_iris!(end_color() -> Color);
-//bind_from_iris!(set_end_color(value: Color));
+bind_from_iris!(start_color() -> String);
+bind_from_iris!(set_start_color(value: String));
+bind_from_iris!(end_color() -> String);
+bind_from_iris!(set_end_color(value: String));

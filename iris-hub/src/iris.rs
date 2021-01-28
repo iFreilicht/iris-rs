@@ -63,8 +63,12 @@ impl Iris {
     define_accessors!(time_divisor() -> u8; set_time_divisor(value));
     define_accessors!(duration_ms() -> u16; set_duration_ms(value));
     define_accessors!(ramp_ratio() -> f32; set_ramp_ratio(value));
-    define_accessors!(start_color() -> Color; set_start_color(value));
-    define_accessors!(end_color() -> Color; set_end_color(value));
+    define_accessors!(start_color;
+        start_color(){(|| to_hex(*start_color))}  -> String;
+         set_start_color(value){(|| start_color = from_hex(value))});
+    define_accessors!(end_color;
+        end_color(){(|| to_hex(*end_color))} -> String; 
+        set_end_color(value){(|| end_color = from_hex(value))});
 }
 
 /// Convert [`iris_lib::color::Color`] to a hex string
@@ -82,4 +86,21 @@ pub fn to_hex(color: Color) -> String {
     output.push('#');
     output.push_str(&hex::encode(color_components));
     output
+}
+
+/// Convert hex string to [`iris_lib::color::Color`]
+/// # Examples
+/// ```
+/// use iris_lib::color::Color;
+/// use iris_hub::iris::from_hex;
+/// assert_eq!(Color::new(0,0,0), from_hex("#000000".to_string()));
+/// assert_eq!(Color::new(127,20,255), from_hex("#7f14ff".to_string()));
+/// assert_eq!(Color::new(255,100,38), from_hex("#ff6426".to_string()));
+/// ```
+pub fn from_hex(string: String) -> Color{
+    let mut str_buffer = string.clone();
+    str_buffer.remove(0);
+    let color_vec = &hex::decode(str_buffer).unwrap();
+    let components: [u8; 3] = [color_vec[0], color_vec[1], color_vec[2]];
+    components.into()
 }
