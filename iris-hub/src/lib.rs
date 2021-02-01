@@ -30,6 +30,7 @@ bind_from_iris!(num_channels() -> u8);
 bind_from_iris!(current_cue_id() -> Option<usize>);
 bind_from_iris!(delete_cue(id: usize));
 bind_from_iris!(launch_cue(id: usize));
+bind_from_iris!(num_cues() -> usize);
 bind_from_iris!(current_color(time_ms: u32, channel: u8) -> String);
 
 // Accessors
