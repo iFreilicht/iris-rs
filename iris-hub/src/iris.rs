@@ -60,23 +60,23 @@ impl Iris {
 
     // Define accessors for all fields of Cue
     define_accessors!(channels;
-        channel(num: usize){(|| channels[num])} -> bool;
+        channel(num: usize){ channels[num] } -> bool;
         // set_channel actually has the signature set_channel(num: usize, value: bool)
-        set_channel(value){(|| channels[num] = value)});
+        set_channel(value){ channels[num] = value });
     define_accessors!(reverse() -> bool; set_reverse(value));
     define_accessors!(time_divisor;
-        time_divisor(){(|| time_divisor.get())} -> u8;
-        set_time_divisor(value){(|| time_divisor = NonZeroU8::new(value).unwrap())});
+        time_divisor(){time_divisor.get()} -> u8;
+        set_time_divisor(value){*time_divisor = NonZeroU8::new(value).unwrap()});
     define_accessors!(duration_ms;
-        duration_ms(){(|| duration_ms.get())} -> u16;
-        set_duration_ms(value){(|| duration_ms = NonZeroU16::new(value).unwrap())});
+        duration_ms(){duration_ms.get()} -> u16;
+        set_duration_ms(value){*duration_ms = NonZeroU16::new(value).unwrap()});
     define_accessors!(ramp_ratio() -> f32; set_ramp_ratio(value));
     define_accessors!(start_color;
-        start_color(){(|| to_hex(*start_color))}  -> String;
-        set_start_color(value){(|| start_color = from_hex(value))});
+        start_color(){to_hex(*start_color)}  -> String;
+        set_start_color(value){*start_color = from_hex(value)});
     define_accessors!(end_color;
-        end_color(){(|| to_hex(*end_color))} -> String;
-        set_end_color(value){(|| end_color = from_hex(value))});
+        end_color(){to_hex(*end_color)} -> String;
+        set_end_color(value){*end_color = from_hex(value)});
 }
 
 /// Convert [`iris_lib::color::Color`] to a hex string
