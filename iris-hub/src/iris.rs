@@ -59,8 +59,8 @@ impl Iris {
     }
 
     // Define accessors for all fields of Cue
-    define_accessors!(channels; 
-        channel(num: usize){(|| channels[num])} -> bool; 
+    define_accessors!(channels;
+        channel(num: usize){(|| channels[num])} -> bool;
         // set_channel actually has the signature set_channel(num: usize, value: bool)
         set_channel(value){(|| channels[num] = value)});
     define_accessors!(reverse() -> bool; set_reverse(value));
@@ -73,9 +73,9 @@ impl Iris {
     define_accessors!(ramp_ratio() -> f32; set_ramp_ratio(value));
     define_accessors!(start_color;
         start_color(){(|| to_hex(*start_color))}  -> String;
-         set_start_color(value){(|| start_color = from_hex(value))});
+        set_start_color(value){(|| start_color = from_hex(value))});
     define_accessors!(end_color;
-        end_color(){(|| to_hex(*end_color))} -> String; 
+        end_color(){(|| to_hex(*end_color))} -> String;
         set_end_color(value){(|| end_color = from_hex(value))});
 }
 
@@ -105,7 +105,7 @@ pub fn to_hex(color: Color) -> String {
 /// assert_eq!(Color::new(127,20,255), from_hex("#7f14ff".to_string()));
 /// assert_eq!(Color::new(255,100,38), from_hex("#ff6426".to_string()));
 /// ```
-pub fn from_hex(string: String) -> Color{
+pub fn from_hex(string: String) -> Color {
     let mut str_buffer = string.clone();
     str_buffer.remove(0);
     let color_vec = &hex::decode(str_buffer).unwrap();
