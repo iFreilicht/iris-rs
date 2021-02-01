@@ -1,7 +1,6 @@
 use crate::color::Color;
 use core::num::{NonZeroU16, NonZeroU8};
 use fixed::types::U0F8; // 8-Bit fixed point number between 0 and 1
-use serde;
 use serde::{Deserialize, Serialize};
 
 /// Number of RGB-LEDs. The total number of LEDs to drive is three times this.

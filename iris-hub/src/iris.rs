@@ -1,11 +1,11 @@
 use core::num::{NonZeroU16, NonZeroU8};
-use hex;
 use iris_lib::color::Color;
 use iris_lib::cue::{Cue, CHANNELS};
 
 use std::sync::Arc;
 use std::sync::Mutex;
 
+#[derive(Default)]
 pub struct Iris {
     cues: Vec<Arc<Mutex<Cue>>>,
     current: Option<Arc<Mutex<Cue>>>,
@@ -13,10 +13,7 @@ pub struct Iris {
 
 impl Iris {
     pub fn new() -> Iris {
-        Iris {
-            cues: Vec::new(),
-            current: None,
-        }
+        Iris::default()
     }
 
     pub fn add_cue(&mut self) {
@@ -106,7 +103,7 @@ pub fn to_hex(color: Color) -> String {
 /// assert_eq!(Color::new(255,100,38), from_hex("#ff6426".to_string()));
 /// ```
 pub fn from_hex(string: String) -> Color {
-    let mut str_buffer = string.clone();
+    let mut str_buffer = string;
     str_buffer.remove(0);
     let color_vec = &hex::decode(str_buffer).unwrap();
     let components: [u8; 3] = [color_vec[0], color_vec[1], color_vec[2]];
