@@ -1,6 +1,7 @@
 use hex;
 use iris_lib::color::Color;
 use iris_lib::cue::{Cue, CHANNELS};
+use core::num::NonZeroU8;
 
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -26,6 +27,9 @@ impl Iris {
     }
     pub fn launch_cue(&mut self, id: usize) {
         self.current = Some(self.cues[id].clone());
+    }
+    pub fn num_cues(&self) -> usize {
+        self.cues.len()
     }
 
     pub fn current_cue_id(&self) -> Option<usize> {
@@ -60,7 +64,9 @@ impl Iris {
         // set_channel actually has the signature set_channel(num: usize, value: bool)
         set_channel(value){(|| channels[num] = value)});
     define_accessors!(reverse() -> bool; set_reverse(value));
-    define_accessors!(time_divisor() -> u8; set_time_divisor(value));
+    define_accessors!(time_divisor;
+        time_divisor(){(|| time_divisor.get())} -> u8;
+        set_time_divisor(value){(|| time_divisor = NonZeroU8::new(value).unwrap())});
     define_accessors!(duration_ms() -> u16; set_duration_ms(value));
     define_accessors!(ramp_ratio() -> f32; set_ramp_ratio(value));
     define_accessors!(start_color;
