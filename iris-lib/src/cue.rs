@@ -1,7 +1,6 @@
 use crate::color::Color;
-use core::num::NonZeroU8;
+use core::num::{NonZeroU16, NonZeroU8};
 use fixed::types::U0F8; // 8-Bit fixed point number between 0 and 1
-use fixed_macro::types::U0F8;
 use serde;
 use serde::{Deserialize, Serialize};
 
@@ -63,7 +62,7 @@ pub struct Cue {
     /// The duration until the animation repeats.
     // u16 is enough for 65 seconds, we don't need more than that and it makes
     // sure the calculations don't overflow when applying the ramp ratio.
-    pub duration_ms: u16,
+    pub duration_ms: NonZeroU16,
     /// The algorithm to use for transitioning between the two colors.
     /// Also see [`RampType`]
     pub ramp_type: RampType,
@@ -84,7 +83,7 @@ impl Default for Cue {
             channels: [true; CHANNELS as usize],
             reverse: false,
             time_divisor: NonZeroU8::new(CHANNELS).unwrap(),
-            duration_ms: 1000, // Don't set to 0, otherwise the Cue would be invisible
+            duration_ms: NonZeroU16::new(1000).unwrap(), // Don't set to 0, otherwise the Cue would be invisible
             ramp_type: RampType::Jump,
             ramp_ratio: 0.5.into(), // Don't set to 0, the start color would be invisible
 
@@ -99,7 +98,7 @@ impl Cue {
     /// Create pre-built Cue displaying a clockwise rotating rainbow
     pub fn rainbow() -> Cue {
         Cue {
-            duration_ms: 3000,
+            duration_ms: NonZeroU16::new(3000).unwrap(),
             ramp_type: RampType::LinearHSL { wrap_hue: false },
             ramp_ratio: 1.0.into(),
             start_color: Color::from_hsl(0, 100, 50),
@@ -111,7 +110,7 @@ impl Cue {
     /// Create pre-built Cue displaying a clockwise rotating black and white half
     pub fn black_white_jump() -> Cue {
         Cue {
-            duration_ms: 3000,
+            duration_ms: NonZeroU16::new(3000).unwrap(),
             start_color: Color::white(),
             end_color: Color::black(),
             ..Default::default()
@@ -121,7 +120,7 @@ impl Cue {
     /// Create pre-built Cue displaying a white breathing effect
     pub fn white_breathing() -> Cue {
         Cue {
-            duration_ms: 3600,
+            duration_ms: NonZeroU16::new(3600).unwrap(),
             ramp_type: RampType::LinearRGB,
             ramp_ratio: 0.4.into(),
             time_divisor: NonZeroU8::new(1).unwrap(),
@@ -180,10 +179,11 @@ impl Cue {
     /// use iris_lib::cue::Cue;
     /// use fixed::types::U0F8;
     /// use fixed_macro::types::U0F8;
+    /// use core::num::NonZeroU16
     ///
     /// let mut cue = Cue {
     ///     reverse: true,  // Reverse makes the numbers a little nicer
-    ///     duration_ms: 1200,
+    ///     duration_ms: NonZeroU16::new(1200).unwrap(),
     ///     time_divisor: 12,
     ///     .. Default::default()
     /// };
@@ -202,11 +202,6 @@ impl Cue {
     pub fn progress(&self, time_ms: u32, channel: u8) -> U0F8 {
         assert!(channel < CHANNELS);
 
-        // duration_ms cannot be 0, otherwise calculations below may underflow or cause a crash
-        if self.duration_ms == 0 {
-            return U0F8!(0);
-        }
-
         // Handle reversed cue
         let channel = if self.reverse {
             channel
@@ -216,7 +211,7 @@ impl Cue {
         };
 
         // We need the duration to be u32 in all calculations
-        let duration = self.duration_ms as u32;
+        let duration = self.duration_ms.get() as u32;
         let time_divisor = self.time_divisor.get() as u32;
 
         // Offset calculation for given channel

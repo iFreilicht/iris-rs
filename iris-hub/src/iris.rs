@@ -1,7 +1,7 @@
+use core::num::{NonZeroU16, NonZeroU8};
 use hex;
 use iris_lib::color::Color;
 use iris_lib::cue::{Cue, CHANNELS};
-use core::num::NonZeroU8;
 
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -67,7 +67,9 @@ impl Iris {
     define_accessors!(time_divisor;
         time_divisor(){(|| time_divisor.get())} -> u8;
         set_time_divisor(value){(|| time_divisor = NonZeroU8::new(value).unwrap())});
-    define_accessors!(duration_ms() -> u16; set_duration_ms(value));
+    define_accessors!(duration_ms;
+        duration_ms(){(|| duration_ms.get())} -> u16;
+        set_duration_ms(value){(|| duration_ms = NonZeroU16::new(value).unwrap())});
     define_accessors!(ramp_ratio() -> f32; set_ramp_ratio(value));
     define_accessors!(start_color;
         start_color(){(|| to_hex(*start_color))}  -> String;
