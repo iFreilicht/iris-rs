@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "vscode-icons-team.vscode-icons",
+        "bungcip.better-toml",
+        "usernamehw.errorlens",
+        "matklad.rust-analyzer"
+    ]
+}
