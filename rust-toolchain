@@ -1,0 +1,4 @@
+[toolchain]
+channel = "stable"
+# WASM is used for iris-hub
+targets = [ "x86_64-unknown-linux-gnu", "wasm32-unknown-unknown" ]
