@@ -11,11 +11,10 @@ with nixpkgs;
 # Define the shell
 pkgs.mkShell {
   nativeBuildInputs = [
+    rust_channel # Full rust from overlay
     git
     nodePackages.npm # For iris-hub JS modules
     nixpkgs-fmt # Autoformatting for shell.nix
-    rustup # So cargo knows about rust version
-    cargo # Compiling rust
     wasm-pack # Compiling to WASM and packing with web-stuff
   ];
 }
